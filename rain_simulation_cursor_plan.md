@@ -1,6 +1,7 @@
 # Rain Simulation: Abel vs Cain — Cursor IDE Build Plan
 
 ## Project Goal
+
 Build an interactive 2D rain simulation that answers the question:
 **"Does a person who runs in the rain get more wet than one who stands still?"**
 
@@ -324,17 +325,18 @@ prompt Cursor:
 
 ## Key Physics Mappings (for Cursor Reference)
 
-| Slider | Raw Value | Phaser Property |
-|--------|-----------|-----------------|
-| Intensity 1–100 | 1=sparse, 100=monsoon | `emitter.frequency` = `map(v, 1,100, 100,5)` ms, `quantity` = `map(v,1,100,1,8)` |
-| Wind −100→+100 | negative=left, positive=right | `emitter.speedX` = `v * 2` (px/s) |
-| Gravity 1–100 | 1=floaty, 100=heavy | `emitter.speedY` = `map(v,1,100,80,600)`, `gravityY` = `map(v,1,100,50,500)` |
+| Slider          | Raw Value                     | Phaser Property                                                                  |
+| --------------- | ----------------------------- | -------------------------------------------------------------------------------- |
+| Intensity 1–100 | 1=sparse, 100=monsoon         | `emitter.frequency` = `map(v, 1,100, 100,5)` ms, `quantity` = `map(v,1,100,1,8)` |
+| Wind −100→+100  | negative=left, positive=right | `emitter.speedX` = `v * 2` (px/s)                                                |
+| Gravity 1–100   | 1=floaty, 100=heavy           | `emitter.speedY` = `map(v,1,100,80,600)`, `gravityY` = `map(v,1,100,50,500)`     |
 
 ---
 
 ## Expected Simulation Outcome
 
 With default settings (no wind, moderate rain):
+
 - **Cain will accumulate ~30–60% more hits** than Abel because he's moving through
   the rain, intercepting drops that would fall ahead of him.
 - With strong tailwind (wind in direction of running):

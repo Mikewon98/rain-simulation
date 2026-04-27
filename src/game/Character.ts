@@ -6,6 +6,9 @@ export class Character {
   public readonly label: string;
   public hitCount = 0;
   private readonly isRunning: boolean;
+  private runSpeed = 180;
+  private runMinX = 60;
+  private runMaxX = 860;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -26,14 +29,8 @@ export class Character {
     this.hitbox.setOrigin(0.5, 0.5);
 
     if (this.isRunning) {
-      this.scene.tweens.add({
-        targets: this.sprite,
-        x: { from: 600, to: 850 },
-        duration: 2100,
-        yoyo: true,
-        repeat: -1,
-        ease: "Linear",
-      });
+      this.sprite.setVelocityX(this.runSpeed);
+      this.sprite.setFlipX(false);
     }
   }
 
@@ -50,10 +47,30 @@ export class Character {
     this.sprite.clearTint();
   }
 
+  public setRunBounds(minX: number, maxX: number): void {
+    this.runMinX = minX;
+    this.runMaxX = maxX;
+  }
+
+  public setRunSpeed(speed: number): void {
+    const body = this.sprite.body as Phaser.Physics.Arcade.Body | null;
+    this.runSpeed = Math.max(0, speed);
+    if (this.isRunning && body) {
+      body.setVelocityX(this.runSpeed);
+    }
+  }
+
   public update(): void {
     if (this.isRunning) {
+      const body = this.sprite.body as Phaser.Physics.Arcade.Body | null;
+      if (body && this.runSpeed > 0) {
+        body.setVelocityX(this.runSpeed);
+      }
+      if (this.sprite.x >= this.runMaxX) {
+        this.sprite.x = this.runMinX;
+      }
       this.hitbox.setPosition(this.sprite.x, this.sprite.y);
-      this.sprite.setFlipX(this.sprite.body?.velocity.x ? this.sprite.body.velocity.x < 0 : false);
+      this.sprite.setFlipX(false);
     }
 
     const tintRatio = Phaser.Math.Clamp(this.hitCount / 200, 0, 1);

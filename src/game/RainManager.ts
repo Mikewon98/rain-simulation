@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 import { Character } from "./Character";
 
+export interface GroundZone {
+  xMin: number;
+  xMax: number;
+  y: number;
+}
+
 export class RainManager {
   private readonly particles: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly splashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -8,6 +14,7 @@ export class RainManager {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly characters: Character[],
+    private readonly groundZones: GroundZone[],
   ) {
     this.particles = this.scene.add.particles(0, 0, "raindrop", {
       x: { min: -50, max: 950 },
@@ -58,20 +65,35 @@ export class RainManager {
     this.characters.forEach((character) => character.reset());
   }
 
+  public pauseRain(): void {
+    this.particles.stop();
+  }
+
+  public resumeRain(): void {
+    this.particles.start();
+  }
+
   public checkHits(): void {
     this.particles.forEachAlive((particle) => {
       const pRect = new Phaser.Geom.Rectangle(particle.x - 2, particle.y - 6, 4, 12);
-
-      if (particle.y >= 455) {
-        this.splashEmitter.explode(Phaser.Math.Between(2, 3), particle.x, 455);
-        particle.kill();
-        return;
-      }
 
       for (const character of this.characters) {
         const cRect = character.hitbox.getBounds();
         if (Phaser.Geom.Intersects.RectangleToRectangle(pRect, cRect)) {
           character.incrementHit();
+          particle.kill();
+          break;
+        }
+      }
+
+      for (const zone of this.groundZones) {
+        if (
+          particle.x >= zone.xMin &&
+          particle.x <= zone.xMax &&
+          particle.y >= zone.y - 2 &&
+          particle.y <= zone.y + 12
+        ) {
+          this.splashEmitter.explode(Phaser.Math.Between(2, 3), particle.x, zone.y);
           particle.kill();
           break;
         }
