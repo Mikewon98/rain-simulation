@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import farmerUrl from "../assets/farmer.png";
+import warriorUrl from "../assets/warrior.png";
 import { Character } from "./Character";
 import { RainManager } from "./RainManager";
 
@@ -20,7 +22,9 @@ export class RainScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.generateProceduralTextures();
+    this.load.image("abel", farmerUrl);
+    this.load.image("cain", warriorUrl);
+    this.ensureRaindropTexture();
   }
 
   create(): void {
@@ -31,33 +35,62 @@ export class RainScene extends Phaser.Scene {
     this.windLines = this.add.graphics();
     this.drawWindLines();
 
-    const ground = this.add.graphics({ lineStyle: { width: 2, color: 0x93a3b5, alpha: 0.9 } });
+    const ground = this.add.graphics({
+      lineStyle: { width: 2, color: 0x93a3b5, alpha: 0.9 },
+    });
     ground.lineBetween(100, 260, 400, 260);
     ground.lineBetween(500, 440, 850, 440);
 
-    this.abel = new Character(this, 240, 220, "abel", false, "Abel");
-    this.cain = new Character(this, 560, 400, "cain", true, "Cain");
+    this.abel = new Character(this, 240, 260, "abel", false, "Abel", {
+      targetDisplayHeight: 128,
+      anchorFeet: true,
+      wetTintTarget: 0x4488ff,
+    });
+    this.cain = new Character(this, 560, 440, "cain", true, "Cain", {
+      targetDisplayHeight: 128,
+      anchorFeet: true,
+      /* Slightly brighter blue so the warrior’s warm tones still read clearly when “wet”. */
+      wetTintTarget: 0x58b0ff,
+    });
     this.cain.setRunBounds(530, 840);
     this.cain.setRunSpeed(180);
-    this.rainManager = new RainManager(this, [this.abel, this.cain], [
-      { xMin: 100, xMax: 400, y: 260 },
-      { xMin: 500, xMax: 850, y: 440 },
-    ]);
+    this.rainManager = new RainManager(
+      this,
+      [this.abel, this.cain],
+      [
+        { xMin: 100, xMax: 400, y: 260 },
+        { xMin: 500, xMax: 850, y: 440 },
+      ],
+    );
 
-    this.add.text(205, 272, "Abel", { color: "#9ac6ff", fontSize: "18px" });
-    this.add.text(650, 452, "Cain", { color: "#ff9a9a", fontSize: "18px" });
+    this.add.text(205, 278, "Abel", { color: "#9ac6ff", fontSize: "18px" });
+    this.add.text(638, 458, "Cain", { color: "#ff9a9a", fontSize: "18px" });
 
-    this.abelText = this.add.text(30, 20, "Abel hits: 0", { color: "#ffffff", fontSize: "22px" });
-    this.cainText = this.add.text(30, 50, "Cain hits: 0", { color: "#ffffff", fontSize: "22px" });
+    this.abelText = this.add.text(30, 20, "Abel hits: 0", {
+      color: "#ffffff",
+      fontSize: "22px",
+    });
+    this.cainText = this.add.text(30, 50, "Cain hits: 0", {
+      color: "#ffffff",
+      fontSize: "22px",
+    });
 
-    this.game.events.on("setIntensity", (value: number) => this.rainManager.setIntensity(value));
+    this.game.events.on("setIntensity", (value: number) =>
+      this.rainManager.setIntensity(value),
+    );
     this.game.events.on("setWind", (value: number) => {
       this.windStrength = value;
       this.rainManager.setWindX(value);
     });
-    this.game.events.on("setGravity", (value: number) => this.rainManager.setGravity(value));
+    this.game.events.on("setGravity", (value: number) =>
+      this.rainManager.setGravity(value),
+    );
     this.game.events.on("setRunSpeed", (value: number) => {
-      const mappedSpeed = Phaser.Math.Linear(0, 380, Phaser.Math.Clamp(value, 0, 100) / 100);
+      const mappedSpeed = Phaser.Math.Linear(
+        0,
+        380,
+        Phaser.Math.Clamp(value, 0, 100) / 100,
+      );
       this.cain.setRunSpeed(mappedSpeed);
     });
     this.game.events.on("showResults", () => this.showResults());
@@ -130,7 +163,7 @@ export class RainScene extends Phaser.Scene {
       450,
       250,
       `Abel: ${abelHits} drops\nCain: ${cainHits} drops\nWinner: ${winner} got ${percent}% more wet\n${explanation}`,
-      { color: "#dbeafe", fontSize: "22px", align: "center", lineSpacing: 8 },
+      { color: "#dbeafe", fontSize: "16px", align: "center", lineSpacing: 8 },
     );
     body.setOrigin(0.5);
 
@@ -149,38 +182,12 @@ export class RainScene extends Phaser.Scene {
     }
   }
 
-  private generateProceduralTextures(): void {
+  private ensureRaindropTexture(): void {
     if (!this.textures.exists("raindrop")) {
       const g = this.add.graphics();
       g.fillStyle(0x88ccff, 0.9);
       g.fillEllipse(2, 7, 3, 12);
       g.generateTexture("raindrop", 4, 14);
-      g.destroy();
-    }
-
-    if (!this.textures.exists("abel")) {
-      const g = this.add.graphics();
-      g.lineStyle(3, 0x4f92ff, 1);
-      g.fillStyle(0x4f92ff, 1);
-      g.fillCircle(16, 10, 7);
-      g.fillRect(12, 18, 8, 26);
-      g.lineBetween(6, 30, 26, 30);
-      g.lineBetween(15, 44, 10, 72);
-      g.lineBetween(17, 44, 22, 72);
-      g.generateTexture("abel", 32, 80);
-      g.destroy();
-    }
-
-    if (!this.textures.exists("cain")) {
-      const g = this.add.graphics();
-      g.lineStyle(3, 0xff6363, 1);
-      g.fillStyle(0xff6363, 1);
-      g.fillCircle(16, 10, 7);
-      g.fillRect(12, 18, 8, 26);
-      g.lineBetween(8, 28, 25, 20);
-      g.lineBetween(15, 44, 8, 68);
-      g.lineBetween(17, 44, 27, 60);
-      g.generateTexture("cain", 32, 80);
       g.destroy();
     }
   }

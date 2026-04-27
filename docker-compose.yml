@@ -1,0 +1,61 @@
+services:
+  watchtower:
+    image: nickfedor/watchtower
+    restart: unless-stopped
+    command:
+      - "--label-enable"
+      - "--rolling-restart"
+      - "--include-restarting"
+      - "--stop-timeout"
+      - "60s"
+      - "--scope=rain-simulation"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=660
+      - DOCKER_CONFIG=/config.json
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=${DISCORD_WEBHOOK_URL}
+  rain-simulation:
+    image: ghcr.io/mikewon98/rain-simulation:stable
+    restart: unless-stopped
+    networks:
+      - portfolio_default
+    labels:
+      - "traefik.enable=true"
+
+      # Main HTTPS router
+      - "traefik.http.routers.rain-simulation.rule=Host(`rain.michaelyze.com`)"
+      - "traefik.http.routers.rain-simulation.entrypoints=websecure"
+      - "traefik.http.routers.rain-simulation.tls.certresolver=myresolver"
+
+      # HTTP redirect router
+      - "traefik.http.routers.rain-simulation-http.rule=Host(`rain.michaelyze.com`)"
+      - "traefik.http.routers.rain-simulation-http.middlewares=redirect-to-https-en"
+      - "traefik.http.routers.rain-simulation-http.entrypoints=web"
+
+      # Service configuration
+      - "traefik.http.services.rain-simulation.loadbalancer.server.port=3000"
+
+      # Middlewares
+      - "traefik.http.middlewares.redirect-to-https-en.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.redirect-to-https-en.redirectscheme.scheme=https"
+
+      # Rate limiting (protection against bots)
+      - "traefik.http.middlewares.rate-limit.ratelimit.average=100"
+      - "traefik.http.middlewares.rate-limit.ratelimit.burst=50"
+      - "traefik.http.middlewares.rate-limit.ratelimit.period=1s"
+
+      # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=rain-simulation"
+
+    env_file:
+      - .env
+
+networks:
+  portfolio_default:
+    external: true
